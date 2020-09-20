@@ -23,7 +23,7 @@ module.exports = (sequelize) => {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      materialNeeded: {
+      materialsNeeded: {
         type: Sequelize.STRING,
         allowNull: true,
       },
@@ -34,7 +34,7 @@ module.exports = (sequelize) => {
   Course.associate = (models) => {
     Course.belongsTo(models.User, {
       foreignKey: {
-        firstName: "UserId",
+        fieldName: "userId",
         allowNull: false,
       },
     });
