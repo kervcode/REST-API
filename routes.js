@@ -54,6 +54,8 @@ router.get("/users", authenticateUser, async (req, res, next) => {
   console.log(user)
 
   res.json({
+    firstName: user.firstName,
+    lastName: user.lastName,
     emailAddress: user.emailAddress,
     password: user.password,
   });
@@ -64,7 +66,6 @@ router.post("/users", async (req, res) => {
   //hashing user passwords
   req.body.password = bcryptjs.hashSync(req.body.password);
 
-  //
   const user = await User.create(req.body);
 
   res.status(201).location("/").end();
@@ -75,7 +76,7 @@ router.post("/users", async (req, res) => {
 // GET /api/courses returns all the courses, status=200
 router.get('/courses', async (req, res, next) => {
   const courses = await Course.findAll();
-  console.log(courses.map((course) => course.userId) )
+  // console.log(courses.map((course) => course.userId) )
   res.json(courses.map((course) => course.get({ plain: true })));
 })
 
@@ -85,9 +86,18 @@ router.get('/courses/:id', async (req, res, next) => {
   res.status(200).end()
 })
 // POST /api/courses creates a course , set the location header for the , status=201
-
+router.post('/courses/:id', authenticateUser, async (req, res, next) => {
+  // console.log(req.params)
+  res.status(200).end()
+})
 // PUT /api/courses/:id updates course for :id, satus=204
-
+router.put('/courses/:id', authenticateUser, async (req, res, next) => {
+  // console.log(req.params)
+  res.status(200).end()
+})
 // DELETE /api/courses/:id deletes course for :id, status=204
-
+router.delete('/courses/:id', authenticateUser, async (req, res, next) => {
+  // console.log(req.params)
+  res.status(200).end()
+})
 module.exports = router;
