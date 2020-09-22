@@ -9,40 +9,41 @@ const router = express.Router();
 
 // authentication middleware
 const authenticateUser = async (req, res, next) => {
+  let message = null;
   const credentials = auth(req);
 
-  if (credentials) {
-    const user = await User.find(u.emailAddress === credentials.emailAddress);
+  const users = await User.findAll()
+  // users = users.map(user => user.get({plain: true}))
+  // console.log(users.map(u => u.password))
+  
+  
 
-    // If user exist, compare user.password with credentials.password
-    if (user) {
-      const authenticated = bcryptjs.compareSync(
-        credentials.password,
-        user.password
-      );
-      // If a password match is found
-      if (authenticated) {
+  if(credentials){
+    // console.log(credentials)
+    const user = users.find(u => u.emailAddress === credentials.name)
+    // console.log(user.firstName)
+    if(user){
+      const authenticated = bcryptjs.compareSync(credentials.pass, user.password);
+      // console.log(authenticated)
+      if(authenticated){
         req.currentUser = user;
       } else {
-        message = `Authentication failure for username: ${user.username}`;
+        message = `Authentication failure for username: ${credentials.name}`;
       }
     } else {
-      message: `Authentication failure for User : ${user.credentials}`;
+      message = `User not found for username: ${credentials.name}`;
     }
   } else {
-    message = "Authentication not found";
-  }
+    message = 'Auth header not found';
+  };
 
-  if (message) {
+  if(message) {
     console.warn(message);
-
-    // Return a response with a 401 Unauthorized HTTP status code.
-    res.status(401).json({ message: "Access Denied" });
+    res.status(401).json({ message: 'Access Denied' })
   } else {
-    // Or if user authentication succeeded...
-    // Call the next() method.
-    next();
+    next()
   }
+  
 };
 
 /** CREATING THE USER ROUTES */
@@ -50,9 +51,10 @@ const authenticateUser = async (req, res, next) => {
 // returning the currently authenticated user
 router.get("/users", authenticateUser, async (req, res, next) => {
   const user = await req.currentUser;
+  console.log(user)
 
   res.json({
-    username: user.emailAddress,
+    emailAddress: user.emailAddress,
     password: user.password,
   });
 });
@@ -79,7 +81,7 @@ router.get('/courses', async (req, res, next) => {
 
 // GET /api/courses/:id returns the courses for :id user, status=200
 router.get('/courses/:id', async (req, res, next) => {
-  console.log(req.params)
+  // console.log(req.params)
   res.status(200).end()
 })
 // POST /api/courses creates a course , set the location header for the , status=201
