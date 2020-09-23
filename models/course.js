@@ -15,9 +15,27 @@ module.exports = (sequelize) => {
       // DID NOT ADD USERID - IT IS COMING FROM THE USER TABLE
       title: {
         type: Sequelize.STRING,
+        allowNull: false,
+        validate: {
+          notNull: {
+            msg: "Please provide a value for title",
+          },
+          notEmpty: {
+            msg: "Please provide a value for title",
+          },
+        },
       },
       description: {
         type: Sequelize.TEXT,
+        allowNull: false,
+        validate: {
+          notNull: {
+            msg: "Please enter a value for description",
+          },
+          notEmpty: {
+            msg: "Please enter a value for description",
+          },
+        },
       },
       estimatedTime: {
         type: Sequelize.STRING,
