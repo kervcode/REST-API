@@ -149,37 +149,53 @@ router.post(
 router.put(
   "/courses/:id",
   authenticateUser,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req, res, next) => {
     const course = await Course.findByPk(req.params.id);
 
     if (course) {
-      await course.update(req.body);
-      res.status(204).end();
+      if (ourse.User.emailAddress === req.currentUser.emailAddress) {
+        await course.update(req.body);
+        res.status(204).end();
+      } else {
+        res.status(403).json({message: "You do not have authorization to alter this course."})
+      }
     } else {
-      res.status(401).json({ message: "Course Not Found" });
+      res.status(404).json({message: "Course Not Found"})
     }
   })
 );
 
-// DELETE /api/courses/:id deletes course for :id, status=204
 router.delete(
   "/courses/:id",
   authenticateUser,
   asyncHandler(async (req, res) => {
     // Find the course to delete by its PK
-    const course = await Course.findByPk(req.params.id);
+    const course = await Course.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+        },
+      ],
+    });
 
     // if the course exist
     // Delete it and send a status of 204
     // Else,
+    
     if (course) {
-      await course.destroy();
-      res.status(204).end();
+      if (course.User.emailAddress === req.currentUser.emailAddress) {
+          await course.destroy();
+          res.status(204).end();
+      } else {
+        res.status(403).json({message: "You do not have authorization to alter this course."})
+      }
     } else {
       res.status(404).json({ message: " Course Not Found." });
     }
-    console.log(course);
-    res.status(200).end();
+    console.log(course.User.emailAddress);
+    console.log(req.currentUser.emailAddress)
+
+    res.status(200).json(course.User.emailAddress).end();
   })
 );
 module.exports = router;
