@@ -13,6 +13,7 @@ function asyncHandler(cb) {
     try {
       await cb(req, res, next);
     } catch (err) {
+      console.log(err);
       next(err);
     }
   };
@@ -64,20 +65,24 @@ router.get(
   "/users",
   authenticateUser,
   asyncHandler(async (req, res, next) => {
-    const user = await req.currentUser;
+    const currentUser = await req.currentUser;
 
     // if a users exist
-    if (user) {
-      res.json({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        emailAddress: user.emailAddress,
-        password: user.password,
+    if (currentUser) {
+      const user = await User.findByPk(currentUser.id, {
+        exclude: ["password"],
       });
+      console.log(user);
+      res.json(user);
+      // res.json({
+      //   firstName: user.firstName,
+      //   lastName: user.lastName,
+      //   emailAddress: user.emailAddress,
+      // });
     } else {
       next(err);
     }
-    console.log(user);
+    // console.log(user);
   })
 );
 
@@ -154,36 +159,36 @@ router.put(
   "/courses/:id",
   authenticateUser,
   asyncHandler(async (req, res) => {
-    // Getting the Current user from the authenticateUser middleware
-    const user = await req.currentUser;
     const course = await Course.findByPk(req.params.id);
-    console.log(course.userId);
-    console.log(user.id);
 
-    // If a course is found
     if (course) {
-      // check if the user id for the found course is equal to the id of the current user
-      if (course.userId === user.id) {
-        await Course.update(req.body, { include: [{ model: User }] });
-        res.status(204).json({ message: req.currentUser }).end();
-      } else {
-        res.status(401).json({
-          message: "You do not have authorization to edit this course.",
-        });
-      }
+      await course.update(req.body);
+      res.status(204).end();
     } else {
-      res.status(404).json({ message: "Course Not Found!" });
+      res.status(401).json({ message: "Course Not Found" });
     }
-    // console.log(course);
-    res.status(204).end();
   })
 );
+
 // DELETE /api/courses/:id deletes course for :id, status=204
 router.delete(
   "/courses/:id",
   authenticateUser,
   asyncHandler(async (req, res) => {
     // console.log(req.params)
+    // Find the course to delete by its PK
+    const course = await Course.findByPk(req.params.id);
+
+    // if the course exist
+    // Delete it and send a status of 204
+    // Else,
+    if (course) {
+      await course.destroy();
+      res.status(204).end();
+    } else {
+      res.status(404).json({ message: " Course Not Found." });
+    }
+    console.log(course);
     res.status(200).end();
   })
 );

@@ -22,19 +22,16 @@ app.use(morgan("dev"));
 
 // TODO setup your api routes here
 //Sync Database
-/** 
+
 (async () => {
-  // try {
-  //   // await sequelize.authenticate();
-  //   console.log("Successful connection to DB");
-  //   // await sequelize.sync();
-  //   const users = await User.findAll();
-  //   console.log(users.map((user) => user.get({ plain: true })));
-  // } catch (error) {
-  //   console.log("Connection to DB failed", error);
-  // }
+  try {
+    await sequelize.authenticate();
+    console.log("Successful connection to DB");
+    await sequelize.sync();
+  } catch (error) {
+    console.log("Connection to DB failed", error);
+  }
 })();
-*/
 
 // setup a friendly greeting for the root route
 app.get("/", (req, res) => {
