@@ -13,6 +13,7 @@ function asyncHandler(cb) {
     try {
       await cb(req, res, next);
     } catch (err) {
+      console.log("============= ERROR ==============");
       console.log(err);
       next(err);
     }
@@ -93,9 +94,16 @@ router.post(
     //hashing user passwords
     req.body.password = bcryptjs.hashSync(req.body.password);
 
-    const user = await User.create(req.body);
+    const users = await User.findAll();
 
-    res.status(201).location("/").end();
+    // Check for duplicate email address
+    if (!users.find((user) => user.emailAddress === req.body.emailAddress)) {
+      console.log("false");
+      const user = await User.create(req.body);
+      res.status(201).location("/").end();
+    } else {
+      res.status(409).json({ message: "Duplicate Email Address" });
+    }
   })
 );
 
