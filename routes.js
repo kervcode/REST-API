@@ -71,9 +71,10 @@ router.get(
     // if a users exist
     if (currentUser) {
       const user = await User.findByPk(currentUser.id, {
-        attributes: { exclude: ["password", "createdAt", "updatedAt"] }
+        attributes: { exclude: ["password", "createdAt", "updatedAt"] },
       });
-    } 
+      res.location("/").end();
+    }
   })
 );
 
@@ -104,15 +105,20 @@ router.get(
   "/courses",
   asyncHandler(async (req, res) => {
     const courses = await Course.findAll({
-      attributes: { exclude: ["createdAt", "updatedAt"] }
-    },{
       include: [
         {
           model: User,
+          as: "Owner",
+          attributes: {
+            exclude: ["createdAt", "updatedAt", "password"],
+          },
         },
       ],
+      attributes: {
+        exclude: ["createdAt", "updatedAt"],
+      },
     });
-    res.status(200).json(courses.map((course) => course.get({ plain: true })));
+    res.status(200).json(courses);
   })
 );
 
@@ -125,17 +131,19 @@ router.get(
     // iF user exist - do this
     if (courseId) {
       // console.log(user);
-      const course = await Course.findAll({
-        attributes: { exclude: ["createdAt", "updatedAt"] }
-      },{
-        where: {
-          id: req.params.id,
-        },
+      const course = await Course.findByPk(courseId, {
         include: [
           {
             model: User,
+            as: "Owner",
+            attributes: {
+              exclude: ["createdAt", "updatedAt", "password"],
+            },
           },
         ],
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
       });
       res.status(200).json(course);
     } else {
@@ -149,7 +157,10 @@ router.post(
   authenticateUser,
   asyncHandler(async (req, res) => {
     const course = await Course.create(req.body);
-    res.status(201).location("/").end();
+    res
+      .status(201)
+      .location("/courses/" + course.id)
+      .end();
   })
 );
 
@@ -158,17 +169,22 @@ router.put(
   "/courses/:id",
   authenticateUser,
   asyncHandler(async (req, res, next) => {
-    const course = await Course.findByPk(req.params.id);
+    const course = await Course.findByPk(req.params.id, {
+      include: [{ model: User }],
+    });
 
     if (course) {
-      if (ourse.User.emailAddress === req.currentUser.emailAddress) {
+      console.log(course);
+      if (course.User.emailAddress === req.currentUser.emailAddress) {
         await course.update(req.body);
         res.status(204).end();
       } else {
-        res.status(403).json({message: "You do not have authorization to alter this course."})
+        res.status(403).json({
+          message: "You do not have authorization to alter this course.",
+        });
       }
     } else {
-      res.status(404).json({message: "Course Not Found"})
+      res.status(404).json({ message: "Course Not Found" });
     }
   })
 );
@@ -189,19 +205,21 @@ router.delete(
     // if the course exist
     // Delete it and send a status of 204
     // Else,
-    
+
     if (course) {
       if (course.User.emailAddress === req.currentUser.emailAddress) {
-          await course.destroy();
-          res.status(204).end();
+        await course.destroy();
+        res.status(204).end();
       } else {
-        res.status(403).json({message: "You do not have authorization to alter this course."})
+        res.status(403).json({
+          message: "You do not have authorization to alter this course.",
+        });
       }
     } else {
       res.status(404).json({ message: " Course Not Found." });
     }
     console.log(course.User.emailAddress);
-    console.log(req.currentUser.emailAddress)
+    console.log(req.currentUser.emailAddress);
 
     res.status(200).json(course.User.emailAddress).end();
   })

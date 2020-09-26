@@ -56,6 +56,7 @@ module.exports = (sequelize) => {
   // Associate user table with a One-to-Many association with the course table
   User.Associate = (models) => {
     User.hasMany(models.Course, {
+      as: "Owner",
       foreignKey: {
         fieldName: "userId",
         allowNull: false,
