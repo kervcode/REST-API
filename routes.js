@@ -73,7 +73,8 @@ router.get(
       const user = await User.findByPk(currentUser.id, {
         attributes: { exclude: ["password", "createdAt", "updatedAt"] },
       });
-      res.location("/").end();
+      console.log(user);
+      res.location("/").json(user);
     }
   })
 );
@@ -81,19 +82,23 @@ router.get(
 // create a new user
 router.post(
   "/users",
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req, res, next) => {
     //hashing user passwords
-    req.body.password = bcryptjs.hashSync(req.body.password);
+    req.body.password = await bcryptjs.hashSync(req.body.password);
 
     const users = await User.findAll();
 
-    // Check for duplicate email address
-    if (!users.find((user) => user.emailAddress === req.body.emailAddress)) {
-      console.log("false");
-      const user = await User.create(req.body);
-      res.status(201).location("/").end();
+    if (users) {
+      // Check for duplicate email address
+      if (!users.find((user) => user.emailAddress === req.body.emailAddress)) {
+        console.log("false");
+        const user = await User.create(req.body);
+        res.status(201).location("/").end();
+      } else {
+        res.status(409).json({ message: "Duplicate Email Address" });
+      }
     } else {
-      res.status(409).json({ message: "Duplicate Email Address" });
+      res.status(404).json({ message: "Message Not Found" });
     }
   })
 );
@@ -170,7 +175,7 @@ router.put(
   authenticateUser,
   asyncHandler(async (req, res, next) => {
     const course = await Course.findByPk(req.params.id, {
-      include: [{ model: User }],
+      include: [{ model: User, as: "Owner" }],
     });
 
     if (course) {
@@ -198,13 +203,14 @@ router.delete(
       include: [
         {
           model: User,
+          as: "Owner",
         },
       ],
     });
 
     // if the course exist
     // Delete it and send a status of 204
-    // Else,
+    // Else, return
 
     if (course) {
       if (course.User.emailAddress === req.currentUser.emailAddress) {

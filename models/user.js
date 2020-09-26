@@ -47,7 +47,14 @@ module.exports = (sequelize) => {
       password: {
         type: Sequelize.STRING,
         allowNull: false,
-        validate: {},
+        validate: {
+          notNull: {
+            msg: "Please enter a value for 'Last Name'",
+          },
+          notEmpty: {
+            msg: "Please enter a value for 'Last Name'",
+          },
+        },
       },
     },
     { sequelize }
