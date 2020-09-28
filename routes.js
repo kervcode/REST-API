@@ -82,23 +82,29 @@ router.get(
 // create a new user
 router.post(
   "/users",
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req, res) => {
+    let password = req.body.password;
     //hashing user passwords
-    req.body.password = await bcryptjs.hashSync(req.body.password);
+    if (password) {
+      password = await bcryptjs.hashSync(password);
+      const users = await User.findAll();
 
-    const users = await User.findAll();
-
-    if (users) {
-      // Check for duplicate email address
-      if (!users.find((user) => user.emailAddress === req.body.emailAddress)) {
-        console.log("false");
-        const user = await User.create(req.body);
-        res.status(201).location("/").end();
+      if (users) {
+        // Check for duplicate email address
+        if (
+          !users.find((user) => user.emailAddress === req.body.emailAddress)
+        ) {
+          console.log("false");
+          const user = await User.create(req.body);
+          res.status(201).location("/").end();
+        } else {
+          res.status(409).json({ message: "Duplicate Email Address" });
+        }
       } else {
-        res.status(409).json({ message: "Duplicate Email Address" });
+        res.status(404).json({ message: "Message Not Found" });
       }
     } else {
-      res.status(404).json({ message: "Message Not Found" });
+      res.status(401).json({ message: "Password cannot be blank and empty" });
     }
   })
 );
