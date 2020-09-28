@@ -139,9 +139,9 @@ router.get(
   asyncHandler(async (req, res, next) => {
     const courseId = await req.params.id;
 
-    // iF user exist - do this
+    // Find the course by its ID in the database.
     if (courseId) {
-      // console.log(user);
+      console.log(courseId);
       const course = await Course.findByPk(courseId, {
         include: [
           {
@@ -156,6 +156,13 @@ router.get(
           exclude: ["createdAt", "updatedAt"],
         },
       });
+      // If the course exist, return it 
+      if (course) {
+        res.json(course)
+      } else {
+        // else set status code to 404 then 
+        res.status(404).json({message: "Course not found. Invalid CourseID."})
+      }
       res.status(200).json(course);
     } else {
       next(err);
@@ -167,11 +174,30 @@ router.post(
   "/courses",
   authenticateUser,
   asyncHandler(async (req, res) => {
-    const course = await Course.create(req.body);
-    res
-      .status(201)
-      .location("/courses/" + course.id)
-      .end();
+    let course = req.body;
+    console.log(req.body)
+    if (course) {
+      if (course.userId) {
+        if (course.title) {
+          if(course.description){
+            course = await Course.create(req.body);
+              res
+                .status(201)
+                .location("/courses/" + course.id)
+                .end();
+          }else{
+            res.status(404).json({message: "Please provide a description for the course."})
+          }
+        } else {
+          res.status(404).json({message: "Please provide a title for the course."})
+        }
+      } else {
+        res.status(404).json({message: "You did not provide the user id for the course owner."})
+      }
+    } else {
+      res.status(400).json({message: "you did not provide the information for the course."})
+    }
+    
   })
 );
 
@@ -185,8 +211,7 @@ router.put(
     });
 
     if (course) {
-      console.log(course);
-      if (course.User.emailAddress === req.currentUser.emailAddress) {
+      if (course.Owner.emailAddress === req.currentUser.emailAddress) {
         await course.update(req.body);
         res.status(204).end();
       } else {
@@ -219,7 +244,7 @@ router.delete(
     // Else, return
 
     if (course) {
-      if (course.User.emailAddress === req.currentUser.emailAddress) {
+      if (course.Owner.emailAddress === req.currentUser.emailAddress) {
         await course.destroy();
         res.status(204).end();
       } else {
