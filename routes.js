@@ -82,13 +82,12 @@ router.get(
 // create a new user
 router.post(
   "/users",
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req, res, next) => {
     let password = req.body.password;
     //hashing user passwords
     if (password) {
       password = await bcryptjs.hashSync(password);
       const users = await User.findAll();
-
       if (users) {
         // Check for duplicate email address
         if (
@@ -104,7 +103,7 @@ router.post(
         res.status(404).json({ message: "Message Not Found" });
       }
     } else {
-      res.status(401).json({ message: "Password cannot be blank and empty" });
+      res.status(404).json({ message: "Password Not Found" });
     }
   })
 );
@@ -156,12 +155,14 @@ router.get(
           exclude: ["createdAt", "updatedAt"],
         },
       });
-      // If the course exist, return it 
+      // If the course exist, return it
       if (course) {
-        res.json(course)
+        res.json(course);
       } else {
-        // else set status code to 404 then 
-        res.status(404).json({message: "Course not found. Invalid CourseID."})
+        // else set status code to 404 then
+        res
+          .status(404)
+          .json({ message: "Course not found. Invalid CourseID." });
       }
       res.status(200).json(course);
     } else {
@@ -175,29 +176,36 @@ router.post(
   authenticateUser,
   asyncHandler(async (req, res) => {
     let course = req.body;
-    console.log(req.body)
+    console.log(req.body);
     if (course) {
       if (course.userId) {
         if (course.title) {
-          if(course.description){
+          if (course.description) {
             course = await Course.create(req.body);
-              res
-                .status(201)
-                .location("/courses/" + course.id)
-                .end();
-          }else{
-            res.status(404).json({message: "Please provide a description for the course."})
+            res
+              .status(201)
+              .location("/courses/" + course.id)
+              .end();
+          } else {
+            res.status(404).json({
+              message: "Please provide a description for the course.",
+            });
           }
         } else {
-          res.status(404).json({message: "Please provide a title for the course."})
+          res
+            .status(404)
+            .json({ message: "Please provide a title for the course." });
         }
       } else {
-        res.status(404).json({message: "You did not provide the user id for the course owner."})
+        res.status(404).json({
+          message: "You did not provide the user id for the course owner.",
+        });
       }
     } else {
-      res.status(400).json({message: "you did not provide the information for the course."})
+      res.status(400).json({
+        message: "you did not provide the information for the course.",
+      });
     }
-    
   })
 );
 
