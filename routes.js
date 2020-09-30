@@ -15,7 +15,14 @@ function asyncHandler(cb) {
     } catch (err) {
       console.log("============= ERROR ==============");
       console.log(err);
-      next(err);
+      // res.status(400).json({ message: err.message });
+      if (err.name === "SequelizeValidationError") {
+        res.status(400).json({ message: err.message });
+      } else if (err.fields[0] === "emailAddress") {
+        res.status(400).json({ message: "emailAddress is not unique" });
+      } else {
+        next();
+      }
     }
   };
 }
@@ -84,27 +91,9 @@ router.post(
   "/users",
   asyncHandler(async (req, res, next) => {
     let password = req.body.password;
-    //hashing user passwords
-    if (password) {
-      password = await bcryptjs.hashSync(password);
-      const users = await User.findAll();
-      if (users) {
-        // Check for duplicate email address
-        if (
-          !users.find((user) => user.emailAddress === req.body.emailAddress)
-        ) {
-          console.log("false");
-          const user = await User.create(req.body);
-          res.status(201).location("/").end();
-        } else {
-          res.status(409).json({ message: "Duplicate Email Address" });
-        }
-      } else {
-        res.status(404).json({ message: "Message Not Found" });
-      }
-    } else {
-      res.status(404).json({ message: "Password Not Found" });
-    }
+    password = await bcryptjs.hashSync(password);
+    const user = await User.create(req.body);
+    res.status(201).location("/").end();
   })
 );
 
@@ -164,9 +153,8 @@ router.get(
           .status(404)
           .json({ message: "Course not found. Invalid CourseID." });
       }
-      res.status(200).json(course);
     } else {
-      next(err);
+      next();
     }
   })
 );
@@ -177,35 +165,12 @@ router.post(
   asyncHandler(async (req, res) => {
     let course = req.body;
     console.log(req.body);
-    if (course) {
-      if (course.userId) {
-        if (course.title) {
-          if (course.description) {
-            course = await Course.create(req.body);
-            res
-              .status(201)
-              .location("/courses/" + course.id)
-              .end();
-          } else {
-            res.status(404).json({
-              message: "Please provide a description for the course.",
-            });
-          }
-        } else {
-          res
-            .status(404)
-            .json({ message: "Please provide a title for the course." });
-        }
-      } else {
-        res.status(404).json({
-          message: "You did not provide the user id for the course owner.",
-        });
-      }
-    } else {
-      res.status(400).json({
-        message: "you did not provide the information for the course.",
-      });
-    }
+
+    course = await Course.create(req.body);
+    res
+      .status(201)
+      .location("/courses/" + course.id)
+      .end();
   })
 );
 
@@ -218,18 +183,18 @@ router.put(
       include: [{ model: User, as: "Owner" }],
     });
 
-    if (course) {
-      if (course.Owner.emailAddress === req.currentUser.emailAddress) {
-        await course.update(req.body);
-        res.status(204).end();
-      } else {
-        res.status(403).json({
-          message: "You do not have authorization to alter this course.",
-        });
-      }
+    if (course.Owner.emailAddress === req.currentUser.emailAddress) {
+      await course.update(req.body);
+      res.status(204).end();
     } else {
-      res.status(404).json({ message: "Course Not Found" });
+      res.status(403).json({
+        message: "You do not have authorization to alter this course.",
+      });
     }
+
+    // else {
+    //   res.status(404).json({ message: "Course Not Found" });
+    // }
   })
 );
 
@@ -260,13 +225,7 @@ router.delete(
           message: "You do not have authorization to alter this course.",
         });
       }
-    } else {
-      res.status(404).json({ message: " Course Not Found." });
     }
-    console.log(course.User.emailAddress);
-    console.log(req.currentUser.emailAddress);
-
-    res.status(200).json(course.User.emailAddress).end();
   })
 );
 module.exports = router;
