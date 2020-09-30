@@ -19,7 +19,7 @@ function asyncHandler(cb) {
       if (err.name === "SequelizeValidationError") {
         res.status(400).json({ message: err.message });
       } else if (err.fields[0] === "emailAddress") {
-        res.status(400).json({ message: "emailAddress is not unique" });
+        res.status(400).json({ message: err.message });
       } else {
         next();
       }
@@ -90,10 +90,16 @@ router.get(
 router.post(
   "/users",
   asyncHandler(async (req, res, next) => {
-    let password = req.body.password;
-    password = await bcryptjs.hashSync(password);
+    //hashing user passwords
+    const users = req.body;
+
+    if(users) {
+      users.password = await bcryptjs.hashSync(users.password);
+    console.log(users)
     const user = await User.create(req.body);
+
     res.status(201).location("/").end();
+    }
   })
 );
 
