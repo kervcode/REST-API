@@ -40,6 +40,6 @@ NPM Packages
 
 6. type `npm run seed` to seed the SQLite database.
 
-7. then run `npm start" to start/lunch the REST API.
+7. then run `npm start` to start/lunch the REST API.
 
 PS: You will need to Install [Postman](https://www.postman.com/downloads/) to test the REST API on your computer.
