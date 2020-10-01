@@ -7,16 +7,23 @@ In this project, I create a REST API with express. The purpose of the REST API i
 ## Technology Used
 
 - SQLite(https://www.sqlite.org/index.html)
+
 - Sequelize ORM(https://sequelize.org/)
+
 - Node.js(https://nodejs.org/en/)
+
 - JavaScript
+
 - CSS
 
 NPM Packages
 
 - basic-auth(https://www.npmjs.com/package/basic-auth)
+
 - bcryptjs(https://www.npmjs.com/package/bcryptjs)
+
 - sequelize-cli(https://www.npmjs.com/package/sequelize-cli)
+
 - express-validator(https://www.npmjs.com/package/express-validator)
 
 ### Instruction on testing out this project on your own computer
