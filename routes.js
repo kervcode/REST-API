@@ -91,15 +91,15 @@ router.post(
   "/users",
   asyncHandler(async (req, res, next) => {
     //hashing user passwords
-    const users = req.body;
+    const user = req.body;
 
-    if(users) {
-      users.password = await bcryptjs.hashSync(users.password);
-    console.log(users)
-    const user = await User.create(req.body);
-
-    res.status(201).location("/").end();
+    if (user.password) {
+      user.password = await bcryptjs.hashSync(user.password);
+      console.log(user);
     }
+
+    await User.create(req.body);
+    res.status(201).location("/").end();
   })
 );
 
@@ -172,7 +172,7 @@ router.post(
     let course = req.body;
     console.log(req.body);
 
-    course = await Course.create(req.body);
+    course = await Course.create(course);
     res
       .status(201)
       .location("/courses/" + course.id)
@@ -189,13 +189,17 @@ router.put(
       include: [{ model: User, as: "Owner" }],
     });
 
-    if (course.Owner.emailAddress === req.currentUser.emailAddress) {
-      await course.update(req.body);
-      res.status(204).end();
+    if (course) {
+      if (course.Owner.emailAddress === req.currentUser.emailAddress) {
+        await course.update(req.body);
+        res.status(204).end();
+      } else {
+        res.status(403).json({
+          message: "You do not have authorization to alter this course.",
+        });
+      }
     } else {
-      res.status(403).json({
-        message: "You do not have authorization to alter this course.",
-      });
+      next();
     }
 
     // else {
@@ -207,7 +211,7 @@ router.put(
 router.delete(
   "/courses/:id",
   authenticateUser,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req, res, next) => {
     // Find the course to delete by its PK
     const course = await Course.findByPk(req.params.id, {
       include: [
@@ -231,6 +235,8 @@ router.delete(
           message: "You do not have authorization to alter this course.",
         });
       }
+    } else {
+      next();
     }
   })
 );
